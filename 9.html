@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html ng-app="taskManagerApp">
+<head>
+    <title>Task Manager</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script>
+        angular.module('taskManagerApp', [])
+            .controller('TaskController', ['$scope', '$http', function($scope, $http) {
+                const apiUrl = 'http://localhost:3000/tasks';
+
+                function loadTasks() {
+                    $http.get(apiUrl).then(response => {
+                        $scope.tasks = response.data;
+                    });
+                }
+
+                loadTasks();
+
+                $scope.addTask = function() {
+                    $http.post(apiUrl, $scope.newTask).then(response => {
+                        $scope.tasks.push(response.data);
+                        $scope.newTask = {};
+                    });
+                };
+
+                $scope.deleteTask = function(id) {
+                    $http.delete(`${apiUrl}/${id}`).then(() => {
+                        $scope.tasks = $scope.tasks.filter(task => task._id !== id);
+                    });
+                };
+
+                $scope.editTask = function(task) {
+                    $scope.newTask = angular.copy(task);
+                    $scope.newTask._id = task._id;
+                };
+
+                $scope.updateTask = function() {
+                    $http.put(`${apiUrl}/${$scope.newTask._id}`, $scope.newTask).then(response => {
+                        const index = $scope.tasks.findIndex(task => task._id === response.data._id);
+                        $scope.tasks[index] = response.data;
+                        $scope.newTask = {};
+                    });
+                };
+            }]);
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, select {
+            margin-right: 10px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body ng-controller="TaskController">
+    <h1>Task Manager</h1>
+    <form ng-submit="newTask._id ? updateTask() : addTask()">
+        <input type="text" ng-model="newTask.task" placeholder="Task" required>
+        <input type="text" ng-model="newTask.description" placeholder="Description">
+        <select ng-model="newTask.status">
+            <option value="pending">Pending</option>
+            <option value="complete">Complete</option>
+            <option value="incomplete">Incomplete</option>
+        </select>
+        <button type="submit">{{ newTask._id ? 'Update Task' : 'Add Task' }}</button>
+    </form>
+    <ul>
+        <li ng-repeat="task in tasks">
+            <span>{{ task.task }} - {{ task.description }} - {{ task.status }}</span>
+            <button ng-click="editTask(task)">Edit</button>
+            <button ng-click="deleteTask(task._id)">Delete</button>
+        </li>
+    </ul>
+</body>
+</html>
