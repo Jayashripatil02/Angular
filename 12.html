@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="taskApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script>
+        const app = angular.module('taskApp', []);
+ 
+        app.controller('taskController', function($scope, $http) {
+            $scope.tasks = [];
+            $scope.newTask = {};
+            $scope.editTask = null;
+ 
+            // Load tasks
+            $scope.loadTasks = function() {
+                $http.get('http://localhost:3000/tasks')
+                    .then(function(response) {
+                        $scope.tasks = response.data;
+                    });
+            };
+ 
+            // Add task
+            $scope.addTask = function() {
+                $http.post('http://localhost:3000/tasks', $scope.newTask)
+                    .then(function(response) {
+                        $scope.loadTasks();
+                        $scope.newTask = {}; // Clear the form
+                    });
+            };
+ 
+            // Edit task
+            $scope.editTaskData = function(task) {
+                $scope.editTask = angular.copy(task);
+            };
+ 
+            // Update task
+            $scope.updateTask = function() {
+                $http.put(`http://localhost:3000/tasks/${$scope.editTask._id}`, $scope.editTask)
+                    .then(function(response) {
+                        $scope.loadTasks();
+                        $scope.editTask = null; // Clear the edit form
+                    });
+            };
+ 
+            // Delete task
+            $scope.deleteTask = function(id) {
+                $http.delete(`http://localhost:3000/tasks/${id}`)
+                    .then(function(response) {
+                        $scope.loadTasks();
+                    });
+            };
+ 
+            // Initialize
+            $scope.loadTasks();
+        });
+    </script>
+</head>
+<body ng-controller="taskController">
+    <h1>Task Manager</h1>
+ 
+    <div>
+        <h2>Add New Task</h2>
+        <form ng-submit="addTask()">
+            <label>Task:</label>
+            <input type="text" ng-model="newTask.task" required><br>
+            <label>Description:</label>
+            <input type="text" ng-model="newTask.description" required><br>
+            <label>Status:</label>
+            <input type="text" ng-model="newTask.status" required><br>
+            <button type="submit">Add Task</button>
+        </form>
+    </div>
+ 
+    <div>
+        <h2>Tasks</h2>
+        <ul>
+            <li ng-repeat="task in tasks">
+                <strong>{{ task.task }}</strong> - {{ task.description }} - {{ task.status }}
+                <button ng-click="editTaskData(task)">Edit</button>
+                <button ng-click="deleteTask(task._id)">Delete</button>
+            </li>
+        </ul>
+    </div>
+ 
+    <div ng-if="editTask">
+        <h2>Edit Task</h2>
+        <form ng-submit="updateTask()">
+            <label>Task:</label>
+            <input type="text" ng-model="editTask.task" required><br>
+            <label>Description:</label>
+            <input type="text" ng-model="editTask.description" required><br>
+            <label>Status:</label>
+            <input type="text" ng-model="editTask.status" required><br>
+            <button type="submit">Update Task</button>
+        </form>
+    </div>
+</body>
+</html>
+ 
