@@ -25,10 +25,12 @@ const studentSchema = new mongoose.Schema({
 
 const Student = mongoose.model('Student', studentSchema);
 
-// Get all students
+// Get all students with sorting
 app.get('/students', async (req, res) => {
     try {
-        const students = await Student.find();
+        // Default to ascending if no sortOrder provided
+        const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
+        const students = await Student.find().sort({ age: sortOrder });
         res.json(students);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch students' });
